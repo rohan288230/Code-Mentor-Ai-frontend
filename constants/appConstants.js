@@ -5,7 +5,7 @@
 const DEFAULT_PORT = 5000;
 
 const CLIENT_ORIGINS = (
-  process.env.CLIENT_ORIGINS || 'http://localhost:5173'
+  process.env.CLIENT_ORIGINS || 'http://localhost:5173' 
 ).split(',').map((s) => s.trim()).filter(Boolean);
 
 module.exports = {

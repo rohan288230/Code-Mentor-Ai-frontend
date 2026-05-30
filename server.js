@@ -105,8 +105,16 @@ app.get('/health/piston', async (req, res) => {
 // Global Error Handler
 app.use(errorHandler);
 
+
 const PORT = process.env.PORT || DEFAULT_PORT;
 app.listen(PORT, () => {
   console.log(`Server started successfully.`);
   console.log(`Server running on port ${PORT}`);
+});
+
+app.get("/", (req, res) => {
+  res.json({
+    status: "success",
+    message: "Code Mentor AI Backend Running"
+  });
 });
