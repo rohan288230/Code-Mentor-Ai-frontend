@@ -44,7 +44,7 @@ connectDB();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: CLIENT_ORIGINS.length === 1 ? CLIENT_ORIGINS[0] : CLIENT_ORIGINS,
+  origin: "*",
   credentials: true
 }));
 app.use(express.json());
