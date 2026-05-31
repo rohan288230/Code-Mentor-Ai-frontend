@@ -50,6 +50,8 @@ const getSystemDesignTopic = async (req, res) => {
 // @route   GET /api/interview/system-design/progress
 // @access  Private
 const getProgress = async (req, res) => {
+  console.log("req.user =", req.user);
+console.log("session =", req.session);
   try {
     let progress = await SystemDesignProgress.findOne({ userId: req.user._id });
     if (!progress) {

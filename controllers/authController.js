@@ -8,6 +8,13 @@ const registerUser = async (req, res, next) => {
 
     req.session.userId = user._id;
     req.session.userRole = user.role;
+
+    if (rememberMe) {
+  req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+} else {
+  req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
+}
+
     
     res.status(201).json({
       _id: user._id,
@@ -42,6 +49,8 @@ const loginUser = async (req, res, next) => {
     }
     
     await ActivityService.updateStreak(user._id);
+    console.log("LOGIN SESSION ID:", req.sessionID);
+console.log("LOGIN USER ID:", req.session.userId);
     res.json({
       _id: user._id,
       name: user.name,
@@ -67,6 +76,8 @@ const logoutUser = (req, res) => {
 };
 
 const getUserProfile = async (req, res, next) => {
+  console.log("PROFILE SESSION ID:", req.sessionID);
+console.log("PROFILE USER ID:", req.session.userId);
   try {
     if (!req.session.userId) {
       res.status(401);

@@ -114,7 +114,7 @@ app.get('/health/piston', async (req, res) => {
   try {
     const axios = require('axios');
     const url = (process.env.PISTON_URL || 'http://127.0.0.1:2000/api/v2/execute').replace('/execute', '/runtimes');
-    const response = await axios.get(url, { timeout: 5000 });
+    const response = await apiClient.get(url, { timeout: 5000 });
     res.json({ status: 'ok', runtimes: response.data.length });
   } catch (err) {
     res.status(503).json({ status: 'error', message: 'Piston engine unavailable', error: err.message });
