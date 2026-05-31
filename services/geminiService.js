@@ -1,4 +1,6 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+// const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const { GoogleGenAI } = require("@google/genai");
 
 // class GeminiService {
 //   static _getGeminiModel() {
@@ -13,45 +15,43 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 class GeminiService {
 
-  static getModel() {
-
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error("Missing GEMINI_API_KEY");
-    }
-
-    const genAI = new GoogleGenerativeAI(
-      process.env.GEMINI_API_KEY
-    );
-
-    return genAI.getGenerativeModel({
-      model: "gemini-2.0-flash"
-    });
+  static getClient() {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("Missing GEMINI_API_KEY");
   }
 
+  return new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY.trim(),
+  });
+}
   
 
-  static async _generateRawResponse(prompt, retries = 3) {
-    const model = this.getModel();
-    
-    while (retries > 0) {
-      try {
-        const result = await model.generateContent({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.5,
-          },
-        });
-        return result.response.text();
-      } catch (error) {
-        retries--;
-        console.warn(`[GeminiService] Network or API error. Retries left: ${retries}. Error: ${error.message}`);
-        if (retries === 0) {
-          throw new Error(`Failed to connect to Gemini AI after multiple attempts. Network or DNS issue: ${error.message}`);
-        }
-        await new Promise(res => setTimeout(res, 1500));
+ static async _generateRawResponse(prompt, retries = 3) {
+  const ai = this.getClient();
+
+  while (retries > 0) {
+    try {
+      const result = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      return result.text;
+    } catch (error) {
+      retries--;
+
+      console.warn(
+        `[GeminiService] Error. Retries left: ${retries}. Error: ${error.message}`
+      );
+
+      if (retries === 0) {
+        throw new Error(`Gemini API request failed: ${error.message}`);
       }
+
+      await new Promise((res) => setTimeout(res, 1500));
     }
   }
+}
 
   static async explainCode(code, problemDescription, language) {
     const prompt = `You are Code Mentor AI, an expert programming instructor. 
@@ -117,10 +117,12 @@ ${bulletPoints.join('\n')}`;
     return this._generateRawResponse(prompt);
   }
 
-  static async analyzeATS(resumeData, jobDescription, retries = 3) {
-    const prompt = `You are an expert Applicant Tracking System (ATS). 
+ static async analyzeATS(resumeData, jobDescription) {
+  const prompt = `You are an expert Applicant Tracking System (ATS). 
 Analyze the following resume against this job description (if provided, else general software engineering standards).
-Job Description: ${jobDescription || 'Standard Software Engineer Role'}
+
+Job Description: ${jobDescription || "Standard Software Engineer Role"}
+
 Resume: ${JSON.stringify(resumeData)}
 
 Provide:
@@ -128,63 +130,60 @@ Provide:
 2. Missing keywords or skills.
 3. 3-4 actionable suggestions to improve the resume.
 
-Format exactly as a JSON object: {"score": 85, "missingKeywords": ["Docker", "AWS"], "suggestions": ["Add more metrics"]}`;
-    
-    const model = this.getModel();
-    while (retries > 0) {
-      try {
-        const result = await model.generateContent({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: "application/json",
-          },
-        });
-        return JSON.parse(result.response.text());
-      } catch (error) {
-        retries--;
-        console.warn(`[GeminiService ATS] Network or API error. Retries left: ${retries}. Error: ${error.message}`);
-        if (retries === 0) {
-          throw new Error(`Failed to connect to Gemini AI (ATS module). Network or DNS issue: ${error.message}`);
-        }
-        await new Promise(res => setTimeout(res, 1500));
-      }
-    }
-  }
+Format exactly as a JSON object:
+{
+  "score": 85,
+  "missingKeywords": ["Docker", "AWS"],
+  "suggestions": ["Add more metrics"]
+}`;
+  
+  const ai = this.getClient();
 
-  static async evaluateMockInterview(question, answer, retries = 3) {
-    const prompt = `You are a Senior Technical Interviewer.
-You asked a candidate this question: "${question}"
-The candidate answered: "${answer}"
+  const result = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+    },
+  });
 
-Evaluate their answer. Provide:
+  return JSON.parse(result.text);
+}
+  static async evaluateMockInterview(question, answer) {
+  const prompt = `You are a Senior Technical Interviewer.
+
+You asked a candidate this question:
+"${question}"
+
+The candidate answered:
+"${answer}"
+
+Evaluate their answer.
+
+Provide:
 1. A score out of 10.
-2. Short, constructive feedback (what was good, what was missing).
+2. Short, constructive feedback.
 3. The ideal concise answer.
 
-Format exactly as a JSON object: {"score": 8, "feedback": "Good understanding, but missed X.", "idealAnswer": "..."}`;
-    
-    const model = this.getModel();
-    while (retries > 0) {
-      try {
-        const result = await model.generateContent({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.3,
-            responseMimeType: "application/json",
-          },
-        });
-        return JSON.parse(result.response.text());
-      } catch (error) {
-        retries--;
-        console.warn(`[GeminiService Interview] Network or API error. Retries left: ${retries}. Error: ${error.message}`);
-        if (retries === 0) {
-          throw new Error(`Failed to connect to Gemini AI (Mock Interview). Network or DNS issue: ${error.message}`);
-        }
-        await new Promise(res => setTimeout(res, 1500));
-      }
-    }
-  }
+Format exactly as a JSON object:
+{
+  "score": 8,
+  "feedback": "Good understanding, but missed X.",
+  "idealAnswer": "..."
+}`;
+  
+  const ai = this.getClient();
+
+  const result = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+    },
+  });
+
+  return JSON.parse(result.text);
+}
 }
 
 module.exports = GeminiService;

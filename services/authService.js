@@ -22,21 +22,17 @@ class AuthService {
   //   throw new Error('Invalid email or password');
   // }
   static async loginUser(email, password) {
-  console.log("STEP 1 - Searching user");
+  
 
   const user = await User.findOne({ email });
-
-  console.log("STEP 2 - User found:", !!user);
 
   if (!user) {
     throw new Error("User not found");
   }
 
-  console.log("STEP 3 - Checking password");
 
   const isMatch = await user.matchPassword(password);
 
-  console.log("STEP 4 - Password result:", isMatch);
 
   if (isMatch) {
     return user;
