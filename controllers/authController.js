@@ -29,8 +29,13 @@ const loginUser = async (req, res, next) => {
     const { email, password, rememberMe } = req.body;
     const user = await AuthService.loginUser(email, password);
 
+    console.log("USER:", user);
+
     req.session.userId = user._id;
     req.session.userRole = user.role;
+
+    console.log("SESSION ID:", req.sessionID);
+console.log("SESSION DATA:", req.session);
 
     if (rememberMe) {
       // Set to 30 days
