@@ -43,8 +43,9 @@ connectDB();
 
 // Middleware
 app.use(helmet());
+console.log("CORS CONFIG LOADED");
 app.use(cors({
-  origin: "*",
+  origin: true, // Reflects the requesting origin dynamically
   credentials: true
 }));
 app.use(express.json());
@@ -110,6 +111,7 @@ const PORT = process.env.PORT || DEFAULT_PORT;
 app.listen(PORT, () => {
   console.log(`Server started successfully.`);
   console.log(`Server running on port ${PORT}`);
+  console.log(CLIENT_ORIGINS);
 });
 
 app.get("/", (req, res) => {
