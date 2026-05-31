@@ -61,14 +61,31 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // Session setup
+
+
+// app.use(session({
+//   secret: process.env.SESSION_SECRET || 'code_mentor_ai_secret_123',
+//   resave: false,
+//   saveUninitialized: false,
+//   cookie: {
+//     secure: process.env.NODE_ENV === 'production',
+//     httpOnly: true,
+//     maxAge: 1000 * 60 * 60 * 24 // 1 day
+//   }
+// }));
+
+app.set('trust proxy', 1);
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'code_mentor_ai_secret_123',
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
+    sameSite: 'none',
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 // 1 day
+    maxAge: 1000 * 60 * 60 * 24
   }
 }));
 
@@ -118,5 +135,12 @@ app.get("/", (req, res) => {
   res.json({
     status: "success",
     message: "Code Mentor AI Backend Running"
+  });
+});
+
+app.get('/debug-session', (req, res) => {
+  res.json({
+    sessionID: req.sessionID,
+    session: req.session
   });
 });
