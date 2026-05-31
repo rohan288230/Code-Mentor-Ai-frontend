@@ -25,6 +25,7 @@ const registerUser = async (req, res, next) => {
 
 const loginUser = async (req, res, next) => {
   try {
+    console.log("LOGIN CONTROLLER HIT");
     const { email, password, rememberMe } = req.body;
     const user = await AuthService.loginUser(email, password);
 
@@ -40,7 +41,7 @@ const loginUser = async (req, res, next) => {
     }
     
     await ActivityService.updateStreak(user._id);
-
+    console.log("RETURNING USER");
     res.json({
       _id: user._id,
       name: user.name,
